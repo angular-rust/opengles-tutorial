@@ -9,6 +9,69 @@ use winit::{
 
 use opengles::glesv2 as gl;
 
+pub const VERT_SHADER: &str = r"
+    attribute vec3 Position;
+
+    void main()
+    {
+        gl_Position = vec4(Position, 1.0);
+    }
+";
+
+pub const FRAG_SHADER: &str = r"
+    precision mediump float;
+    void main()
+    {
+        gl_FragColor = vec4(1.0, 0.5, 0.2, 1.0);
+    }
+";
+
+fn shader_from_source(source: &str, kind: gl::GLenum) -> Result<u32, String> {
+    let id = gl::create_shader(kind);
+
+    gl::shader_source(id, source.as_bytes());
+    gl::compile_shader(id);
+
+    let success = gl::get_shaderiv(id, gl::GL_COMPILE_STATUS);
+
+    if success == 0 {
+        let len = gl::get_shaderiv(id, gl::GL_INFO_LOG_LENGTH);
+
+        return match gl::get_shader_info_log(id, len) {
+            Some(message) => Err(message),
+            None => Ok(id)
+        };
+    }
+
+    Ok(id)
+}
+
+fn program_from_shaders(vert_shader: u32, frag_shader: u32) -> Result<u32, String> {
+    let program_id = gl::create_program();
+
+    gl::attach_shader(program_id, vert_shader);
+    gl::attach_shader(program_id, frag_shader);
+
+    gl::link_program(program_id);
+
+    // error handling here
+    let success = gl::get_programiv(program_id, gl::GL_LINK_STATUS);
+
+    if success == 0 {
+        let len = gl::get_programiv(program_id, gl::GL_INFO_LOG_LENGTH);     
+
+        return match gl::get_program_info_log(program_id, len) {
+            Some(message) => Err(message),
+            None => Ok(program_id)
+        };
+    }
+
+    gl::detach_shader(program_id, vert_shader);
+    gl::detach_shader(program_id, frag_shader);
+
+    Ok(program_id)
+}
+
 fn main() {
     // EGL setup here
     let egl = unsafe {
@@ -47,7 +110,7 @@ fn main() {
         .expect("unable to choose EGL configuration")
         .expect("no EGL configuration found");
 
-    let ctx_attribs = [egl::NONE];
+    let ctx_attribs = [egl::CONTEXT_CLIENT_VERSION, 2, egl::NONE];
     let ctx = egl
         .create_context(display, config, None, &ctx_attribs)
         .expect("unable to create EGL context");
@@ -86,9 +149,49 @@ fn main() {
     egl.make_current(display, Some(surface), Some(surface), Some(ctx))
         .expect("unable to bind the context");
 
+    println!(
+        "GL_RENDERER = {}",
+        gl::get_string(gl::GL_RENDERER).unwrap_or("Unknown".into())
+    );
+    println!(
+        "GL_VERSION = {}",
+        gl::get_string(gl::GL_VERSION).unwrap_or("Unknown".into())
+    );
+    println!(
+        "GL_VENDOR = {}",
+        gl::get_string(gl::GL_VENDOR).unwrap_or("Unknown".into())
+    );
+    println!(
+        "GL_EXTENSIONS = {}",
+        gl::get_string(gl::GL_EXTENSIONS).unwrap_or("Unknown".into())
+    );
+
+    gl::viewport(0, 0, 900, 700);
+
     gl::clear_color(0.3, 0.3, 0.5, 1.0);
 
     gl::clear(gl::GL_COLOR_BUFFER_BIT);
+
+    let vertex_shader = match shader_from_source(VERT_SHADER, gl::GL_VERTEX_SHADER) {
+        Ok(id) => {
+            println!("Vertex Shader Compiled");
+            id
+        },
+        Err(err) => panic!("{}", err)
+    };
+
+    let fragment_shader = match shader_from_source(FRAG_SHADER, gl::GL_FRAGMENT_SHADER) {
+        Ok(id) => {
+            println!("Fragment Shader Compiled");
+            id
+        },
+        Err(err) => panic!("Error: {}", err)
+    };
+
+    match program_from_shaders(vertex_shader, fragment_shader) {
+        Ok(_) => println!("Program linked"),
+        Err(err) => panic!("Error: {}", err)
+    }
 
     egl.swap_buffers(display, surface)
         .expect("unable to post EGL context");

@@ -1,0 +1,12 @@
+[package]
+name = "lesson-03-shaders"
+version = "0.1.0"
+authors = ["Victor Dudochkin <dudochkin.victor@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+winit = "0.25"
+egl = {package = "khronos-egl", version = "4.1", features = ["dynamic"] }
+opengles = "0.1"
+raw-window-handle = "0.3"
+
