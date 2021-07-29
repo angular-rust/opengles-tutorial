@@ -1,0 +1,38 @@
+[package]
+authors = ["Victor Dudochkin <dudochkin.victor@gmail.com>"]
+name = "c03_model_loading"
+version = "0.6.1"
+edition = "2018"
+publish = false
+
+[dependencies]
+cgmath = "0.18"
+image = "0.23"
+# only needed from chapter 3 on
+tobj = "3.0"
+num = "0.4"
+rand = "0.8"
+
+egl = {package = "khronos-egl", version = "4.1", features = ["dynamic"] }
+libloading = "0.7"
+ux-dx = "0.2"
+winit = "0.25"
+raw-window-handle = "0.3"
+
+[features]
+default = [
+    "chapter-1",
+    "chapter-2",
+    "chapter-3",
+    "chapter-4",
+    "chapter-5",
+    "chapter-6",
+    "chapter-7"
+]
+chapter-1 = []
+chapter-2 = []
+chapter-3 = []
+chapter-4 = []
+chapter-5 = []
+chapter-6 = []
+chapter-7 = []
