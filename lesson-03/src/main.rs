@@ -172,6 +172,10 @@ fn main() {
 
     gl::clear(gl::GL_COLOR_BUFFER_BIT);
 
+
+    egl.swap_buffers(display, surface)
+        .expect("unable to post EGL context");
+
     let vertex_shader = match shader_from_source(VERT_SHADER, gl::GL_VERTEX_SHADER) {
         Ok(id) => {
             println!("Vertex Shader Compiled");
@@ -192,9 +196,6 @@ fn main() {
         Ok(_) => println!("Program linked"),
         Err(err) => panic!("Error: {}", err)
     }
-
-    egl.swap_buffers(display, surface)
-        .expect("unable to post EGL context");
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
